@@ -3,7 +3,7 @@
 
 ## 💬 **2️⃣ Chatterbox.ai – README.md**
 
-```markdown
+
 # 💬 Chatterbox.ai
 
 **Chatterbox.ai** is a full-stack, ChatGPT-like chat application built with the **MERN stack** and integrated with **OpenAI API**. It allows users to chat with an AI assistant, save chat history, and experience a modern, responsive chat interface.
