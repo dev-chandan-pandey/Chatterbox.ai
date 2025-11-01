@@ -48,11 +48,14 @@ cd client && npm install
 ```
 3. Add environment variables
 Create a .env file in the root:
+
 ```
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
 OPENAI_API_KEY=your_openai_key
 ```
 4. Run the app
-```npm run dev
+
+``
+`npm run dev
 ```
