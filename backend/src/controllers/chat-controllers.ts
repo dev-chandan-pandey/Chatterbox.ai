@@ -1,25 +1,27 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/User.js";
-import Groq from "groq-sdk/index.mjs";
+import Groq from "groq-sdk";
 
-// Simple message type for Groq (NO OpenAI types)
+// Simple chat message type
 type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
 };
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
+  apiKey: process.env.GROQ_API_KEY as string,
 });
 
+// ===============================
+// CREATE NEW CHAT COMPLETION
+// ===============================
 export const generateChatCompletion = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   const { message } = req.body;
 
-  if (!message || !message.trim()) {
+  if (!message?.trim()) {
     return res.status(400).json({
       success: false,
       message: "Message is required",
@@ -37,27 +39,27 @@ export const generateChatCompletion = async (
 
     const messages: ChatMessage[] = [
       { role: "system", content: "You are a helpful assistant." },
-      ...user.chats.slice(-6).map((chat) => ({
-        role: chat.role as "user" | "assistant",
-        content: chat.content,
+      ...user.chats.slice(-6).map((c) => ({
+        role: c.role as "user" | "assistant",
+        content: c.content,
       })),
       { role: "user", content: message },
     ];
 
-    // save user message
+    // Save user message
     user.chats.push({ role: "user", content: message });
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant", // ✅ ACTIVE MODEL
+      model: "llama-3.1-8b-instant",
       messages,
     });
 
-    const aiMessage = completion.choices[0]?.message?.content;
+    const aiReply = completion.choices[0]?.message?.content;
 
-    if (aiMessage) {
+    if (aiReply) {
       user.chats.push({
         role: "assistant",
-        content: aiMessage,
+        content: aiReply,
       });
     }
 
@@ -69,55 +71,74 @@ export const generateChatCompletion = async (
     });
   } catch (error: any) {
     console.error(error);
-
     return res.status(500).json({
       success: false,
-      message: error.message || "Groq LLM error",
+      message: error.message || "Groq error",
     });
   }
 };
 
+// ===============================
+// GET ALL USER CHATS
+// ===============================
 export const sendChatsToUser = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
-    //user token check
     const user = await User.findById(res.locals.jwtData.id);
+
     if (!user) {
-      return res.status(401).send("User not registered OR Token malfunctioned");
+      return res
+        .status(401)
+        .json({ success: false, message: "User not found" });
     }
-    if (user._id.toString() !== res.locals.jwtData.id) {
-      return res.status(401).send("Permissions didn't match");
-    }
-    return res.status(200).json({ message: "OK", chats: user.chats });
-  } catch (error) {
-    console.log(error);
-    return res.status(200).json({ message: "ERROR", cause: error.message });
+
+    return res.status(200).json({
+      success: true,
+      chats: user.chats,
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load chats",
+    });
   }
 };
 
+// ===============================
+// DELETE ALL USER CHATS
+// ===============================
 export const deleteChats = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
-    //user token check
     const user = await User.findById(res.locals.jwtData.id);
+
     if (!user) {
-      return res.status(401).send("User not registered OR Token malfunctioned");
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
     }
-    if (user._id.toString() !== res.locals.jwtData.id) {
-      return res.status(401).send("Permissions didn't match");
-    }
-    //@ts-ignore
-    user.chats = [];
+
+    // ✅ Correct way
+    user.chats.splice(0, user.chats.length);
+
     await user.save();
-    return res.status(200).json({ message: "OK" });
-  } catch (error) {
-    console.log(error);
-    return res.status(200).json({ message: "ERROR", cause: error.message });
+
+    return res.status(200).json({
+      success: true,
+      message: "Chats deleted",
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete chats",
+    });
   }
 };
+

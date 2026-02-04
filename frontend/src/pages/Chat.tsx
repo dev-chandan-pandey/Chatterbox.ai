@@ -76,14 +76,46 @@ const Chat = () => {
       </Box>
 
       <Box sx={{ flex: 0.8 }}>
-        <Box sx={{ height: "60vh", overflowY: "auto" }}>
+        <Box 
+        sx={{
+            width: "100%",
+            height: "60vh",
+            borderRadius: 3,
+            mx: "auto",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "scroll",
+            overflowX: "hidden",
+            overflowY: "auto",
+            scrollBehavior: "smooth",
+          }}
+        >
           {chatMessages.map((chat, i) => (
             <ChatItem key={i} content={chat.content} role={chat.role} />
           ))}
         </Box>
 
-        <Box sx={{ display: "flex" }}>
-          <input ref={inputRef} />
+        <Box sx={{ display: "flex" }}
+        style={{
+            width: "80%",
+            borderRadius: 8,
+            backgroundColor: "rgb(227, 232, 238)",
+            display: "flex",
+            margin: "auto",
+          }}
+        >
+          <input ref={inputRef}
+          type="text"
+            style={{
+              width: "100%",
+              backgroundColor: "transparent",
+              padding: "30px",
+              border: "none",
+              outline: "none",
+              color: "black",
+              fontSize: "20px",
+            }}
+          />
           <IconButton onClick={handleSubmit}>
             <IoMdSend />
           </IconButton>
