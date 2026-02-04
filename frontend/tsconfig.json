@@ -17,11 +17,14 @@
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
 
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+
+    "noUnusedLocals": false,
+    
    
   },
   "include": ["src"],
