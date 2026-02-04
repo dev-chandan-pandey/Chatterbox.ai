@@ -1,4 +1,4 @@
-import  { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Box, Avatar, Typography, Button, IconButton } from "@mui/material";
 import red from "@mui/material/colors/red";
 import { useAuth } from "../context/AuthContext";
@@ -11,41 +11,47 @@ import {
   sendChatRequest,
 } from "../helpers/api-communicator";
 import toast from "react-hot-toast";
+
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
+
 const Chat = () => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const auth = useAuth();
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
- const handleSubmit = async () => {
-  const content = inputRef.current?.value?.trim();
-if (!content) return;
 
-  if (inputRef && inputRef.current) {
-    inputRef.current.value = "";
-  }
-  const newMessage: Message = { role: "user", content };
-  setChatMessages((prev) => [...prev, newMessage]);
+  // ✅ SAFE initials generation
+  const initials =
+    auth?.user?.name
+      ?.split(" ")
+      ?.map((n) => n[0])
+      ?.join("") || "";
 
-  try {
-    const chatData = await sendChatRequest(content);
+  const handleSubmit = async () => {
+    const content = inputRef.current?.value?.trim();
+    if (!content) return;
 
-  
+    if (inputRef.current) inputRef.current.value = "";
 
-if (chatData.chats) {
-  setChatMessages([...chatData.chats]);
-} else {
-  toast.error(chatData.message);
-}
+    const newMessage: Message = { role: "user", content };
+    setChatMessages((prev) => [...prev, newMessage]);
 
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to send message");
-  }
-};
+    try {
+      const chatData = await sendChatRequest(content);
+
+      if (chatData?.chats) {
+        setChatMessages(chatData.chats);
+      } else {
+        toast.error(chatData?.message || "Failed to get response");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send message");
+    }
+  };
 
   const handleDeleteChats = async () => {
     try {
@@ -54,29 +60,38 @@ if (chatData.chats) {
       setChatMessages([]);
       toast.success("Deleted Chats Successfully", { id: "deletechats" });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error("Deleting chats failed", { id: "deletechats" });
     }
   };
+
+  // ✅ Load chats only when user is ready
   useLayoutEffect(() => {
-    if (auth?.isLoggedIn && auth.user) {
-      toast.loading("Loading Chats", { id: "loadchats" });
-      getUserChats()
-        .then((data) => {
-          setChatMessages([...data.chats]);
-          toast.success("Successfully loaded chats", { id: "loadchats" });
-        })
-        .catch((err) => {
-          console.log(err);
-          toast.error("Loading Failed", { id: "loadchats" });
-        });
-    }
-  }, [auth]);
+    if (!auth?.user) return;
+
+    toast.loading("Loading Chats", { id: "loadchats" });
+    getUserChats()
+      .then((data) => {
+        if (data?.chats) {
+          setChatMessages(data.chats);
+        }
+        toast.success("Successfully loaded chats", { id: "loadchats" });
+      })
+      .catch(() => {
+        toast.error("Loading Failed", { id: "loadchats" });
+      });
+  }, [auth?.user]);
+
+  // ✅ Redirect only when auth check finished
   useEffect(() => {
-    if (!auth?.user) {
-      return navigate("/login");
+    if (auth?.isLoggedIn === false) {
+      navigate("/login");
     }
-  }, [auth]);
+  }, [auth?.isLoggedIn, navigate]);
+
+  // ✅ Prevent render until auth resolved
+  if (!auth) return null;
+
   return (
     <Box
       sx={{
@@ -88,6 +103,7 @@ if (chatData.chats) {
         gap: 3,
       }}
     >
+      {/* Sidebar */}
       <Box
         sx={{
           display: { md: "flex", xs: "none", sm: "none" },
@@ -115,16 +131,18 @@ if (chatData.chats) {
               fontWeight: 700,
             }}
           >
-            {auth?.user?.name[0]}
-            {auth?.user?.name.split(" ")[1][0]}
+            {initials}
           </Avatar>
+
           <Typography sx={{ mx: "auto", fontFamily: "work sans" }}>
             You are talking to a ChatBOT
           </Typography>
-          <Typography sx={{ mx: "auto", fontFamily: "work sans", my: 4, p: 3 }}>
-            You can ask some questions related to Knowledge, Business, Advices,
-            Education, etc. But avoid sharing personal information
+
+          <Typography sx={{ mx: "auto", my: 4, p: 3 }}>
+            You can ask questions related to Knowledge, Business, Advice,
+            Education, etc. Avoid sharing personal information.
           </Typography>
+
           <Button
             onClick={handleDeleteChats}
             sx={{
@@ -135,19 +153,19 @@ if (chatData.chats) {
               borderRadius: 3,
               mx: "auto",
               bgcolor: red[300],
-              ":hover": {
-                bgcolor: red.A400,
-              },
+              ":hover": { bgcolor: red.A400 },
             }}
           >
             Clear Conversation
           </Button>
         </Box>
       </Box>
+
+      {/* Chat Area */}
       <Box
         sx={{
           display: "flex",
-          flex: { md: 0.8, xs: 1, sm: 1 },
+          flex: { md: 0.8, xs: 1 },
           flexDirection: "column",
           px: 3,
         }}
@@ -161,8 +179,9 @@ if (chatData.chats) {
             fontWeight: "600",
           }}
         >
-          Model - GPT 3.5 Turbo
+          Chat Model
         </Typography>
+
         <Box
           sx={{
             width: "100%",
@@ -171,44 +190,46 @@ if (chatData.chats) {
             mx: "auto",
             display: "flex",
             flexDirection: "column",
-            overflow: "scroll",
-            overflowX: "hidden",
             overflowY: "auto",
-            scrollBehavior: "smooth",
           }}
         >
           {chatMessages.map((chat, index) => (
-            //@ts-ignore
-            <ChatItem content={chat.content} role={chat.role} key={index} />
+            <ChatItem
+              key={index}
+              content={chat.content}
+              role={chat.role}
+            />
           ))}
         </Box>
-        <div
-          style={{
+
+        {/* Input */}
+        <Box
+          sx={{
             width: "100%",
-            borderRadius: 8,
+            borderRadius: 2,
             backgroundColor: "rgb(17,27,39)",
             display: "flex",
-            margin: "auto",
+            mt: 2,
           }}
         >
-          {" "}
           <input
             ref={inputRef}
             type="text"
+            placeholder="Type a message..."
             style={{
               width: "100%",
               backgroundColor: "transparent",
-              padding: "30px",
+              padding: "20px",
               border: "none",
               outline: "none",
               color: "white",
-              fontSize: "20px",
+              fontSize: "18px",
             }}
           />
           <IconButton onClick={handleSubmit} sx={{ color: "white", mx: 1 }}>
             <IoMdSend />
           </IconButton>
-        </div>
+        </Box>
       </Box>
     </Box>
   );

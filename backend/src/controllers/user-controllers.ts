@@ -12,8 +12,8 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   signed: true,
   path: "/",
-  secure: isProduction,                 // HTTPS only in prod
-  sameSite: isProduction ? "none" : "lax", // Cross-site cookies
+  secure: true,          // REQUIRED on Render
+  sameSite: "none" as const, // REQUIRED for cross-origin
 };
 
 export const getAllUsers = async (
