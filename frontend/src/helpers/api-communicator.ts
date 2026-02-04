@@ -1,13 +1,12 @@
 import axios from "axios";
 export const loginUser = async (email: string, password: string) => {
-  const res = await axios.post("/user/login", { email, password });
-  if (res.status !== 200) {
-    throw new Error("Unable to login");
+  try {
+    const res = await axios.post("/user/login", { email, password });
+    return res.data;
+  } catch (err: any) {
+    return { message: err.response?.data?.message || "Unable to login" };
   }
-  const data = await res.data;
-  return data;
 };
-
 export const signupUser = async (
   name: string,
   email: string,
@@ -31,12 +30,16 @@ export const checkAuthStatus = async () => {
 };
 
 export const sendChatRequest = async (message: string) => {
-  const res = await axios.post("/chat/new", { message });
-  if (res.status !== 200) {
-    throw new Error("Unable to send chat");
+  try {
+    const res = await axios.post("/chat/new", { message });
+    return res.data; // success case
+  } catch (err: any) {
+    if (err.response) {
+      // return backend error message if available
+      return { message: err.response.data.message || "Request failed" };
+    }
+    return { message: "Network error" };
   }
-  const data = await res.data;
-  return data;
 };
 
 export const getUserChats = async () => {

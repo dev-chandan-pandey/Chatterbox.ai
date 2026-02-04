@@ -1,3 +1,9 @@
+import "dotenv/config";   // ✅ MUST be first
+
+import express from "express";
+import mongoose from "mongoose";
+import chatRoutes from "./routes/chat-routes.js";
+
 import app from "./app.js";
 import { connectToDatabase } from "./db/connection.js";
 
