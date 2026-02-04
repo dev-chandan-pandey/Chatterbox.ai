@@ -1,70 +1,106 @@
 import axios from "axios";
+
+/**
+ * Axios instance
+ * - withCredentials is REQUIRED for cookie-based auth
+ * - baseURL switches automatically between dev & prod
+ */
+const api = axios.create({
+  baseURL:
+    import.meta.env.PROD
+      ? "https://chatterbox-ai-q6pj.onrender.com/api/v1"
+      : "http://localhost:5000/api/v1",
+  withCredentials: true,
+});
+
+// ---------------- AUTH ----------------
+
 export const loginUser = async (email: string, password: string) => {
   try {
-    const res = await axios.post("/user/login", { email, password });
+    const res = await api.post("/user/login", { email, password });
     return res.data;
   } catch (err: any) {
-    return { message: err.response?.data?.message || "Unable to login" };
+    return {
+      success: false,
+      message: err.response?.data?.message || "Unable to login",
+    };
   }
 };
+
 export const signupUser = async (
   name: string,
   email: string,
   password: string
 ) => {
-  const res = await axios.post("/user/signup", { name, email, password });
-  if (res.status !== 201) {
-    throw new Error("Unable to Signup");
+  try {
+    const res = await api.post("/user/signup", { name, email, password });
+    return res.data;
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.response?.data?.message || "Unable to signup",
+    };
   }
-  const data = await res.data;
-  return data;
 };
 
 export const checkAuthStatus = async () => {
-  const res = await axios.get("/user/auth-status");
-  if (res.status !== 200) {
-    throw new Error("Unable to authenticate");
+  try {
+    const res = await api.get("/user/auth-status");
+    return res.data;
+  } catch (err: any) {
+    return {
+      success: false,
+      message: "Not authenticated",
+    };
   }
-  const data = await res.data;
-  return data;
 };
+
+export const logoutUser = async () => {
+  try {
+    const res = await api.get("/user/logout");
+    return res.data;
+  } catch (err: any) {
+    return {
+      success: false,
+      message: "Logout failed",
+    };
+  }
+};
+
+// ---------------- CHAT ----------------
 
 export const sendChatRequest = async (message: string) => {
   try {
-    const res = await axios.post("/chat/new", { message });
-    return res.data; // success case
+    const res = await api.post("/chat/new", { message });
+    return res.data;
   } catch (err: any) {
-    if (err.response) {
-      // return backend error message if available
-      return { message: err.response.data.message || "Request failed" };
-    }
-    return { message: "Network error" };
+    return {
+      success: false,
+      message: err.response?.data?.message || "Failed to send message",
+    };
   }
 };
 
 export const getUserChats = async () => {
-  const res = await axios.get("/chat/all-chats");
-  if (res.status !== 200) {
-    throw new Error("Unable to send chat");
+  try {
+    const res = await api.get("/chat/all-chats");
+    return res.data;
+  } catch (err: any) {
+    return {
+      success: false,
+      message: "Failed to load chats",
+    };
   }
-  const data = await res.data;
-  return data;
 };
 
 export const deleteUserChats = async () => {
-  const res = await axios.delete("/chat/delete");
-  if (res.status !== 200) {
-    throw new Error("Unable to delete chats");
+  try {
+    const res = await api.delete("/chat/delete");
+    return res.data;
+  } catch (err: any) {
+    return {
+      success: false,
+      message: "Failed to delete chats",
+    };
   }
-  const data = await res.data;
-  return data;
-};
-
-export const logoutUser = async () => {
-  const res = await axios.get("/user/logout");
-  if (res.status !== 200) {
-    throw new Error("Unable to delete chats");
-  }
-  const data = await res.data;
-  return data;
 };
