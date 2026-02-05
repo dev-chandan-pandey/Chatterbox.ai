@@ -1,18 +1,12 @@
 import axios from "axios";
 
-console.log("API URL:", import.meta.env.VITE_API_URL);
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL, // ✅ ONLY THIS
+  withCredentials: true,                 // ✅ REQUIRED for cookies
+});
 
-axios.defaults.baseURL =import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
-axios.defaults.withCredentials = true;
-
-
-if (!axios.defaults.baseURL) {
+if (!import.meta.env.VITE_API_URL) {
   throw new Error("VITE_API_URL is not defined");
 }
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:5000/api/v1",
-  withCredentials: true, // 🔥 THIS IS THE FIX
-});
 
 export default api;

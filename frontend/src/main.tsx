@@ -6,11 +6,11 @@ import { createTheme, ThemeProvider } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { Toaster } from "react-hot-toast";
-import axios from "axios";
-console.log("API URL:", import.meta.env.VITE_API_URL);
+// import axios from "axios";
+// console.log("API URL:", import.meta.env.VITE_API_URL);
 
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
-axios.defaults.withCredentials = true;
+// axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+// axios.defaults.withCredentials = true;
 const theme = createTheme({
   typography: {
     fontFamily: "Roboto Slab,serif",
