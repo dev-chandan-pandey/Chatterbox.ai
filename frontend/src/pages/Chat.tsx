@@ -128,9 +128,12 @@ const Chat = () => {
             overflowY: "auto",
           }}
         >
-          {chatMessages.map((chat, i) => (
-            <ChatItem key={i} content={chat.content} role={chat.role} />
-          ))}
+          {chatMessages
+  .filter((c) => c?.content && c?.role)
+  .map((chat, i) => (
+    <ChatItem key={i} content={chat.content} role={chat.role} />
+))}
+
         </Box>
 
         {/* INPUT */}
